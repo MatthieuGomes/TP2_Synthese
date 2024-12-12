@@ -243,7 +243,114 @@ Comme attendu : toujours la bonne adresse, un file descriptor > 0 et un message 
 
 ## QUESTION 4
 
-### a
+### 4.a
 
+Pour former la requete RRQ, on doit connaitre sa trame. La voici : 
 
+```diff
++----------+---------+----------+----------+--------+----------+
+| Opcode   | Filename (N bytes) | 0        | Mode   | 0        |
++----------+---------------------+----------+--------+----------+
+```
+Le tout en binaire. On va créé une fonction dans `functions.c` qui prend en paramètre :
+* le nom du fichier
+* le mode de transfert
+* un buffer qui contiendra la requête
+* le opcode de la requête  
+Et qui renverra la taille de la requête.
 
+```c title="functions.c - build_request"
+ssize_t build_request(int opcode, char *file, char *mode, char *request_buffer){
+    if (!file || !mode || !request_buffer) {
+        fprintf(stderr, "Erreur : paramètres invalides\n");
+        return -1;
+    }
+    size_t offset = 0;
+    // initialisation of the opcode
+    uint16_t opcode_unint = htons(opcode);
+    // copy the opcode_unint in the request_buffer buffer
+    memcpy(request_buffer+offset,&opcode_unint,sizeof(opcode_unint));
+    offset += sizeof(opcode_unint);
+    // copy the file name in the request_buffer buffer
+    memcpy(request_buffer+offset,file,strlen(file));
+    offset += strlen(file);
+    // copy the null byte in the request_buffer buffer
+    memcpy(request_buffer+offset,"\0",1);
+    offset += 1;
+    // copy the mode in the request_buffer buffer
+    memcpy(request_buffer+offset,MODE,strlen(MODE));
+    offset += strlen(MODE);
+    // copy the null byte in the request_buffer buffer
+    memcpy(request_buffer+offset,"\0",1);
+    offset += 1;
+    return offset;
+}
+```
+*functions.c - build_request*
+
+Pour s'assure de la bonne formation de la requête, nous allons l'afficher au format hexadecimal et crééer un fonction pour l'occasion qui prend en paramètre la requête et sa taille.
+
+```c title="functions.c - print_request"
+void print_request(const char *buffer, size_t length) {
+    printf("Requête formée (en hexadécimal) :\n");
+    for (size_t i = 0; i < length; i++) {
+        printf("%02x ", (unsigned char)buffer[i]);
+        if ((i + 1) % 16 == 0) printf("\n"); // Sauter une ligne tous les 16 octets
+    }
+    printf("\n");
+}    
+```
+*functions.c - print_request*
+
+On s'assure que la requête est bien formée et qu'il n'y aucune erreur de paramètre au moment de l'execution dans le main:
+
+```c title="gettftp.c"
+    char * request_buffer = malloc(MAX_BUFFER_SIZE);
+    memset(request_buffer,0,sizeof(MAX_BUFFER_SIZE));
+    ssize_t request_size = build_request(RRQ_CODE,file,MODE,request_buffer);
+    if ((int) request_size == REQUEST_BUILDING_ERROR){
+        fprintf(stderr,"Error in request building\n");
+        return EXIT_FAILURE;
+    }
+    print_request(request_buffer,request_size);
+```
+*gettftp.c*
+
+On lance la commande habituelle et on obtient le résultat suivant :
+
+![alt text](image-5.png)
+
+0n reconnait bien la trame d'une RRQ.
+
+Maintenant envoyons la request au server. 
+Pour ça, on utilse la fonction send dans le main de `gettftp.c` :
+
+```c title="gettftp.c"
+    ssize_t send_status = send(socket_file_descriptor,request_buffer,request_size,0);
+    if (send_status == SEND_FAILURE){
+        fprintf(stderr,"Error in sending the request\n");
+        return EXIT_FAILURE;
+    }
+    else{
+        printf("Request sent\n");
+    }
+    free(request_buffer);
+```
+*gettftp.c*
+
+On va maintenant s'assurer du bon fonctionnement de 2 façons :
+
+* En regardant le resultat de ma commande
+* En sniffant les paquets envoyés avec wireshark
+
+Voici le résultat de la commande :
+
+![alt text](image-6.png)
+
+D'après mon programme, la requête à correctement été envoyée. Vérifions cela avec wireshark :
+
+![alt text](image-7.png)
+
+On a bien envoyé une requête RRQ au serveur avec le bon fichier et le bon mode.
+
+Tout est bon, on peut continuer à coder.
