@@ -13,5 +13,9 @@ int get_servers_infos(char * host_address,char * host_port, struct addrinfo ** r
     return exec_status;
 }
 
+int create_socket(int domain, int type, int protocol){
+    int socket_file_descriptor = socket(domain, type, protocol);
+    return socket_file_descriptor;
+}
     
     

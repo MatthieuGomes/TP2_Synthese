@@ -14,8 +14,9 @@
 #define TRUE 1
 #define FALSE 0
 #define IPV4_ADDR_LEN 16
+#define SOCKET_SUCCESS_LIMIT 0
 
 int get_servers_infos(char * host_address,char * host_port, struct addrinfo ** result_infos);
-
+int create_socket(int domain, int type, int protocol);
 
 #endif
