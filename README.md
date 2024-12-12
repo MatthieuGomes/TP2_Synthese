@@ -237,3 +237,7 @@ Verifions que tout fonctionne correctement en lançant la commande habituelle...
 
 Comme attendu : toujours la bonne adresse, un file descriptor > 0 et un message de connexion établi. Tout est bon, on peut continuer à coder.
 
+## QUESTION 4
+
+
+
