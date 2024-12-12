@@ -13,7 +13,7 @@ int main(int argc, char *argv[]) {
 
     if (argc < MIN_ARGUMENT || argc > MAX_ARGUMENT) {
         fprintf(stderr,"Wrong number of arguments for %s\n", argv[0]);
-        exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
     if (file != NULL){
         printf("file: %s\n", file);
@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
     int exec_status = get_servers_infos(host_address,host_port,&result);
     if(exec_status != EXIT_SUCCESS){
         fprintf(stderr,"Error in get_servers_infos\n");
-        exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
     int number_of_servers = 0;
     // goes through the addrinfo linked list to count the number of servers
@@ -48,7 +48,17 @@ int main(int argc, char *argv[]) {
     char ip_address[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, ip_addres_from_sock, ip_address, INET_ADDRSTRLEN);
     printf("IP address: %s\n", ip_address);
-    
+
+    // creates socket for UDP server
+    int socket_file_descriptor = create_socket(result);
+    if (socket_file_descriptor < SOCKET_SUCCESS_LIMIT){
+        fprintf(stderr,"Error in socket creation, socket returned %dn\n",socket_file_descriptor);
+        return EXIT_FAILURE;
+    }
+    else{
+        printf("Socket created witd fd: %d\n",socket_file_descriptor);
+    }
+
     freeaddrinfo(result);
     freeaddrinfo(pointer);
     return EXIT_SUCCESS;

@@ -49,6 +49,17 @@ int main(int argc, char *argv[]) {
     inet_ntop(AF_INET, ip_addres_from_sock, ip_address, INET_ADDRSTRLEN);
     printf("IP address: %s\n", ip_address);
     
+    // creates socket for UDP server
+    int socket_file_descriptor = create_socket(result);
+    if (socket_file_descriptor < SOCKET_SUCCESS_LIMIT){
+        fprintf(stderr,"Error in socket creation, socket returned %dn\n",socket_file_descriptor);
+        return EXIT_FAILURE;
+    }
+    else{
+        printf("Socket created witd fd: %d\n",socket_file_descriptor);
+    }
+
+
     freeaddrinfo(result);
     freeaddrinfo(pointer);
     return EXIT_SUCCESS;
