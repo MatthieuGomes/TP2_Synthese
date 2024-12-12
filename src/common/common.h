@@ -15,6 +15,7 @@
 #define FALSE 0
 #define IPV4_ADDR_LEN 16
 #define SOCKET_SUCCESS_LIMIT 0
+#define CONNECTION_FAILURE -1
 
 int get_servers_infos(char * host_address,char * host_port, struct addrinfo ** result_infos);
 int create_socket(struct addrinfo * server_infos);

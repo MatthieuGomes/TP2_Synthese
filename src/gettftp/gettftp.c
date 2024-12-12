@@ -59,6 +59,16 @@ int main(int argc, char *argv[]) {
         printf("Socket created witd fd: %d\n",socket_file_descriptor);
     }
 
+    // configure the socket to be connected to our server
+    int connection_result = connect(socket_file_descriptor, result->ai_addr, result->ai_addrlen);
+    if (connection_result == CONNECTION_FAILURE){
+        fprintf(stderr,"Error in connection\n");
+        return EXIT_FAILURE;
+    }
+    else{
+        printf("Connection established\n");
+    }
+    close(socket_file_descriptor);
     freeaddrinfo(result);
     freeaddrinfo(pointer);
     return EXIT_SUCCESS;
