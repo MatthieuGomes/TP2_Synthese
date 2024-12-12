@@ -25,11 +25,3 @@ ssize_t build_request(int opcode, char *file, char *mode, char *request_buffer){
     offset += 1;
     return offset;
 }
-void print_request(const char *buffer, size_t length) {
-    printf("Requête formée (en hexadécimal) :\n");
-    for (size_t i = 0; i < length; i++) {
-        printf("%02x ", (unsigned char)buffer[i]);
-        if ((i + 1) % 16 == 0) printf("\n"); // Sauter une ligne tous les 16 octets
-    }
-    printf("\n");
-}
