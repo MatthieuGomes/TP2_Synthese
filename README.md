@@ -212,9 +212,28 @@ Ensuite, j'appelle cette dernière dans les main de chaque programme et je m'ass
 ```
 *gettftp.c/puttftp.c*
 
+Ensuite, nous allons configurer notre socket pour qu'il se connecte directement au serveur, ça nous evitera d'utiliser `sendto` et d'utiliser plutôt `send`. Pour se faire, on utilise la fonction `connect` qui prend en paramètre le file descriptor du socket, l'adresse du serveur, directement depuis le struct, et la taille de cette dernière.
+
+```c title="gettftp.c/puttftp.c"
+
+// configure the socket to be connected to our server
+    int connection_result = connect(socket_file_descriptor, result->ai_addr, result->ai_addrlen);
+    if (connection_result == CONNECTION_FAILURE){
+        fprintf(stderr,"Error in connection\n");
+        return EXIT_FAILURE;
+    }
+    else{
+        printf("Connection established\n");
+    }
+    close(socket_file_descriptor);
+```
+*gettftp.c/puttftp.c*
+
+On s'assure bien évidemment que le code de retour de `connect` est bien égal à 0. Si ce n'est pas le cas, on affiche un message d'erreur et on quitte le programme avec un code d'erreur. Enfin, on ferme le socket avec `close`.
+
 Verifions que tout fonctionne correctement en lançant la commande habituelle... Et voilà le résultat : 
 
 ![alt text](image-4.png)
 
-Comme attendu : toujours la bonne adresse et un file descriptor > 0. Tout est bon, on peut continuer à oder.
+Comme attendu : toujours la bonne adresse, un file descriptor > 0 et un message de connexion établi. Tout est bon, on peut continuer à coder.
 
