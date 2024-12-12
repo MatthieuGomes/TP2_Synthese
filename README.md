@@ -62,7 +62,7 @@ Lorsqu'on lance la commande
 
 on obtient le résultat suivant :
 
-![alt text](image1.png)
+![alt text](image-1.png)
 
 Ce qui est statisfaisant ! On peut donc continuer à coder.
 
@@ -70,3 +70,118 @@ Ce qui est statisfaisant ! On peut donc continuer à coder.
 
 On sait qu'on est capable de lire correctement les arguments d'entéen, on va donc retirer les printf qui n'étaient là que pour démontrer que nous pouvions bien lire les arguments.
 
+Etant donné que récuprer les infos du serveur se fait dans les 2 programme, je vais coder ce dernier dans un fichier `common.c`. Pour m'assurer que ce dernier est correctement inlcude, j'ajoute les gardes fous habituels dans les headers (`#ifndef FILE_H` et `#define FILE_H` en terminant le fichier par `#endif`.)
+
+Pour utiliser `getaddrinfo`, on doit créer une structure `addrinfo` qui contiendra les informations du serveur (`result`), ainsi qu'un filtre (`filter`) ainsi qu'un pointeur (`pointer`) pour parcourir la liste chainée `result`. Voici donc le prototype de la fonction `get_servers_infos` :
+
+```c title="common.h"
+int get_servers_infos(char * host_address,char * host_port, struct addrinfo ** result_infos);
+```
+*common.h*
+
+La fonction retourne le status de sortie de `getaddrinfo` et modifie le buffer `result_infos` qui contiendra les informations du serveur.
+L'utilisation d'un `addrinfo **` permet de modifier le pointeur `result_infos` dans la fonction appelante sans segfault.
+
+Voici l'implémentation de la fonction `get_servers_infos` :
+
+```c title="common.c"
+int get_servers_infos(char * host_address,char * host_port, struct addrinfo ** result_infos) {
+    struct addrinfo filter;
+    
+    // filter initialization
+    memset(&filter,0,sizeof(filter));
+    filter.ai_family = AF_INET; // IPv4
+    filter.ai_socktype = SOCK_DGRAM; // UDP
+    filter.ai_protocol = IPPROTO_UDP; // UDP
+
+    int exec_status = getaddrinfo(host_address, host_port, &filter, result_infos);
+    return exec_status;
+}
+```
+*common.c*  
+Et ici l'appel de cette dernière dans le `main` des 2 programmes :
+
+```c title="gettftp.c/puttftp.c"
+    struct addrinfo *result,*pointer;
+    // structs initialization
+    memset(&result,0,sizeof(result));
+    memset(&pointer,0,sizeof(pointer));
+
+    char * host_address = argv[1];
+    char * host_port = argv[2];
+    char * file = argv[3];
+
+    if (argc < MIN_ARGUMENT || argc > MAX_ARGUMENT) {
+        fprintf(stderr,"Wrong number of arguments for %s\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
+    if (file != NULL){
+        printf("file: %s\n", file);
+    }
+    
+    int exec_status = get_servers_infos(host_address,host_port,&result);
+    if(exec_status != EXIT_SUCCESS){
+        fprintf(stderr,"Error in get_servers_infos\n");
+        exit(EXIT_FAILURE);
+    }
+```
+*gettftp.c/puttftp.c*
+
+Nous somme censé n'avoir qu'un serveur, on va donc vérifier que le nombre de serveur est bien égal à 1. Si ce n'est pas le cas, on affiche un message d'erreur et on quitte le programme avec un code d'erreur. Pour se faire, on parcourt la liste chainée `result` et on incrémente un compteur `number_of_servers` à chaque itération. On utilise ensuite un switch pour vérifier le nombre de serveurs.
+
+```c title="gettftp.c/puttftp.c"
+    int number_of_servers = 0;
+    // goes through the addrinfo linked list to count the number of servers
+    for(pointer = result; pointer != NULL; pointer = pointer->ai_next){
+        number_of_servers++;
+    }
+    // checks the number of servers
+    switch (number_of_servers)
+    {
+    case 0:
+        fprintf(stderr,"No servers found\n");
+        return EXIT_FAILURE;
+    case 1:
+        break;
+    default:
+        fprintf(stderr,"%d servers : Too much servers found\n",number_of_servers);    
+        return EXIT_FAILURE;
+    }
+```
+*gettftp.c/puttftp.c*
+
+Enfin, pour s'assurer qu'on récupère les bonnes informations, on va afficher l'adresse IP du serveur. Pour se faire, on cast l'`ai_addr` en `struct sockaddr_in *`, puis on récupère `sin_addr` et utilise `inet_ntop` pour convertir le tout en un string correspondant à l'adress ip.
+```c title="gettftp.c/puttftp.c"
+    // gets the IP address of the server
+    struct sockaddr_in * sock_address = (struct sockaddr_in *) result->ai_addr;
+    void * ip_addres_from_sock = &(sock_address->sin_addr);
+    char ip_address[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, ip_addres_from_sock, ip_address, INET_ADDRSTRLEN);
+    printf("IP address: %s\n", ip_address);
+```
+*gettftp.c/puttftp.c*
+
+Pour finir, on libère les 2 pointeurs de structures `result` et `pointer` avec `freeaddrinfo` pour éviter les fuites mémoires.
+
+```c title="gettftp.c/puttftp.c"
+    freeaddrinfo(result);
+    freeaddrinfo(pointer);
+    return EXIT_SUCCESS;
+```
+*gettftp.c/puttftp.c*
+
+Sachant que j'ai lancé le serveur local, je devrais donc retrouver mon address local à l'exectution du programme. On trouve cette dernière après avoir installer `net-tools` et lancé la commande `ifconfig`. Dans mon cas j'obtiens : 
+
+![alt text](image-2.png)
+
+Testons maintenant notre programme avec la commande suivante :
+
+```bash
+./gettftp localhost 1069 README.md
+```  
+
+On obtient le résultat suivant :
+
+![alt text](image-3.png)
+
+Ca correspond bien à ce que l'on attendait. On peut donc continuer à coder.
