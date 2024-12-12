@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
     printf("IP address: %s\n", ip_address);
 
     // creates socket for UDP server
-    int socket_file_descriptor = create_socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+    int socket_file_descriptor = create_socket(result);
     if (socket_file_descriptor < SOCKET_SUCCESS_LIMIT){
         fprintf(stderr,"Error in socket creation, socket returned %dn\n",socket_file_descriptor);
         return EXIT_FAILURE;

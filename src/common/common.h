@@ -17,6 +17,6 @@
 #define SOCKET_SUCCESS_LIMIT 0
 
 int get_servers_infos(char * host_address,char * host_port, struct addrinfo ** result_infos);
-int create_socket(int domain, int type, int protocol);
+int create_socket(struct addrinfo * server_infos);
 
 #endif
