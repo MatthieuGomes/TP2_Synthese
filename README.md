@@ -185,3 +185,6 @@ On obtient le résultat suivant :
 ![alt text](image-3.png)
 
 Ca correspond bien à ce que l'on attendait. On peut donc continuer à coder.
+
+## QUESTION 3
+
