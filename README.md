@@ -188,3 +188,33 @@ Ca correspond bien à ce que l'on attendait. On peut donc continuer à coder.
 
 ## QUESTION 3
 
+Pour reserver le socket, cette tache étant partagée par les 2 programme, nous allons encapusler la fonction `socket` dans `common.c`  sous le nom `create_socket`. Cette fonction prend en paramètre un pointeur sur un `struct addrinfo` et retourne le descripteur de fichier du socket.
+
+```c title="common.c"
+int create_socket(struct addrinfo * server_infos) {
+    int socket_file_descriptor = socket(server_infos->ai_family, server_infos->ai_socktype, server_infos->ai_protocol);
+    return socket_file_descriptor;
+}
+```
+*common.c*
+
+Ensuite, j'appelle cette dernière dans les main de chaque programme et je m'assure que le file descriptor recu est bien > 0 (`SOCKET_SUCCESS_LIMIT`) et donc que le socket a bien été créé.
+
+```c title="gettftp.c/puttftp.c"
+    int socket_file_descriptor = create_socket(result);
+    if (socket_file_descriptor < SOCKET_SUCCESS_LIMIT){
+        fprintf(stderr,"Error in socket creation, socket returned %dn\n",socket_file_descriptor);
+        return EXIT_FAILURE;
+    }
+    else{
+        printf("Socket created witd fd: %d\n",socket_file_descriptor);
+    }
+```
+*gettftp.c/puttftp.c*
+
+Verifions que tout fonctionne correctement en lançant la commande habituelle... Et voilà le résultat : 
+
+![alt text](image-4.png)
+
+Comme attendu : toujours la bonne adresse et un file descriptor > 0. Tout est bon, on peut continuer à oder.
+
