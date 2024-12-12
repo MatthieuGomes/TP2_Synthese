@@ -68,6 +68,26 @@ int main(int argc, char *argv[]) {
     else{
         printf("Connection established\n");
     }
+
+    char * request_buffer = malloc(MAX_BUFFER_SIZE);
+    memset(request_buffer,0,sizeof(MAX_BUFFER_SIZE));
+    ssize_t request_size = build_request(RRQ_CODE,file,MODE,request_buffer);
+    if ((int) request_size == REQUEST_BUILDING_ERROR){
+        fprintf(stderr,"Error in request building\n");
+        return EXIT_FAILURE;
+    }
+    print_request(request_buffer,request_size);
+
+    // send the request to the server
+    ssize_t send_status = send(socket_file_descriptor,request_buffer,request_size,0);
+    if((int) send_status == SEND_FAILURE){
+        fprintf(stderr,"Error in sending the request\n");
+        return EXIT_FAILURE;
+    }
+    else{
+        printf("Request sent\n");
+    }
+    free(request_buffer);
     close(socket_file_descriptor);
     freeaddrinfo(result);
     freeaddrinfo(pointer);
