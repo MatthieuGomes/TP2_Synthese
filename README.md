@@ -66,4 +66,7 @@ on obtient le résultat suivant :
 
 Ce qui est statisfaisant ! On peut donc continuer à coder.
 
+## QUESTION 2
+
+On sait qu'on est capable de lire correctement les arguments d'entéen, on va donc retirer les printf qui n'étaient là que pour démontrer que nous pouvions bien lire les arguments.
 
