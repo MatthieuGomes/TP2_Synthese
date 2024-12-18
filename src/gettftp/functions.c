@@ -1,10 +1,7 @@
 #include "functions.h"
 
 ssize_t build_request(int opcode, char *file, char *mode, char *request_buffer){
-    if (!file || !mode || !request_buffer) {
-        fprintf(stderr, "Erreur : paramètres invalides\n");
-        return -1;
-    }
+
     size_t offset = 0;
     // initialisation of the opcode
     uint16_t opcode_unint = htons(opcode);
@@ -18,8 +15,8 @@ ssize_t build_request(int opcode, char *file, char *mode, char *request_buffer){
     memcpy(request_buffer+offset,"\0",1);
     offset += 1;
     // copy the mode in the request_buffer buffer
-    memcpy(request_buffer+offset,MODE,strlen(MODE));
-    offset += strlen(MODE);
+    memcpy(request_buffer+offset,mode,strlen(mode));
+    offset += strlen(mode);
     // copy the null byte in the request_buffer buffer
     memcpy(request_buffer+offset,"\0",1);
     offset += 1;

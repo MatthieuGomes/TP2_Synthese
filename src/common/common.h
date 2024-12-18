@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <arpa/inet.h>
+#define LOCALHOST "127.0.0.1"
+#define CLIENT_PORT 1070
 #define MAX_ARGUMENT 4
 #define MIN_ARGUMENT 3
 #define TRUE 1
@@ -21,8 +23,15 @@
 #define MODE "octet"
 #define REQUEST_BUILDING_ERROR -1
 #define SEND_FAILURE -1
+#define OP_CODE_POSITION 0
+#define BLOCK_NUMBER_POSITION 2
+#define BLOCK_NUMBER_POSITION_IN_ACK 3
+#define DATA_POSITION 4
+#define ACK_CODE 4
+#define ACK_SIZE 4
+#define PACKET_MAX_SIZE 512
 
 int get_servers_infos(char * host_address,char * host_port, struct addrinfo ** result_infos);
-int create_socket(struct addrinfo * server_infos);void print_request(const char *buffer, size_t length);
+void print_request(const char *buffer, size_t length);
 
 #endif
