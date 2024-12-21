@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <fcntl.h>
 #define LOCALHOST "127.0.0.1"
 #define CLIENT_PORT 1070
 #define MAX_ARGUMENT 4

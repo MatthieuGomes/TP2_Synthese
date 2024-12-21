@@ -112,47 +112,78 @@ int main(int argc, char *argv[]) {
     // receive the response from the server
     char * response_buffer = malloc(MAX_BUFFER_SIZE);
     memset(response_buffer,0,sizeof(MAX_BUFFER_SIZE));
-    ssize_t recv_status = recvfrom(client_socket,response_buffer,MAX_BUFFER_SIZE,0,server_address,&server_address_length); // changes the port number to the newly opened port by the server for correct communication
-    if((int) recv_status == SEND_FAILURE){
-        perror("Error in receiving the response");
-        return EXIT_FAILURE;
-    }
-    else{
-        printf("Response received\n");
-        printf("Response size : %ld\n",recv_status);
-        print_request(response_buffer,recv_status);
-    }
+    ssize_t recv_status = 0;
+    char * file_path = malloc(MAX_BUFFER_SIZE);
+    sprintf(file_path,"./received/%s",file);
+    int new_file = creat(file_path,766);
     do{
-
-    }while(0);
+        recv_status= recvfrom(client_socket,response_buffer,MAX_BUFFER_SIZE,0,server_address,&server_address_length); // changes the port number to the newly opened port by the server for correct communication
+        if((int) recv_status == SEND_FAILURE){
+            perror("Error in receiving the response");
+            int deletion_status= unlink(file_path);
+            if(deletion_status==EXIT_FAILURE){
+                perror("Error in removing unfinished file");
+            }
+            return EXIT_FAILURE;
+        }
+        else{
+            printf("Response received\n");
+            printf("Response size : %ld\n",recv_status);
+            print_request(response_buffer,recv_status);
+        }
+        uint16_t opcode;
+        uint16_t block_number;
+        char received_file[recv_status-2*sizeof(uint16_t)];
+        memcpy(&opcode,&response_buffer[OP_CODE_POSITION],sizeof(opcode));
+        memcpy(&block_number,&response_buffer[BLOCK_NUMBER_POSITION],sizeof(block_number));
+        memcpy(&received_file,&response_buffer[DATA_POSITION],sizeof(received_file));
+        printf("Opcode : %d\n",ntohs(opcode));
+        printf("Block number : %d\n",ntohs(block_number));
+        if(opcode==5){
+            printf("Error code : %d\n",ntohs(block_number));
+            int deletion_status= unlink(file_path);
+            if(deletion_status==EXIT_FAILURE){
+                perror("Error in removing unfinished file");
+            }
+            return EXIT_FAILURE;
+        }
+        int written_file_size = write(new_file,received_file,sizeof(received_file));
+        if(written_file_size==EXIT_FAILURE){
+            perror("Error in writting file");
+            int deletion_status= unlink(file_path);
+            if(deletion_status==EXIT_FAILURE){
+                perror("Error in removing unfinished file");
+            }
+            return EXIT_FAILURE;
+        }
+        char * ack_buffer = malloc(MAX_BUFFER_SIZE);
+        memset(ack_buffer,0,sizeof(ACK_SIZE));
+        uint16_t ack_opcode = ntohs(ACK_CODE);
+        uint16_t ack_block_number = ntohs(block_number);
+        memcpy(ack_buffer,&ack_opcode,sizeof(ack_opcode));  
+        memcpy(&ack_buffer[BLOCK_NUMBER_POSITION_IN_ACK],&ack_block_number,sizeof(ack_block_number));
+        print_request(ack_buffer,ACK_SIZE);
+        //Send the acknowledgment to the server
+        ssize_t ack_send_status = sendto(client_socket,ack_buffer,ACK_SIZE,0,server_address,sizeof(struct sockaddr));
+        if((int) ack_send_status == SEND_FAILURE){
+            perror("Error in sending the acknowledgment");
+            int deletion_status= unlink(file_path);
+            if(deletion_status==EXIT_FAILURE){
+                perror("Error in removing unfinished file");
+            }
+            return EXIT_FAILURE;
+            
+        }
+        else{
+            printf("Acknowledgment sent\n");
+        }
+    
+    }while((int)recv_status>=PACKET_MAX_SIZE);
     // extract the opcode from the response
-    uint16_t opcode;
-    uint16_t block_number;
-    char received_file[recv_status-2*sizeof(uint16_t)];
-    memcpy(&opcode,&response_buffer[OP_CODE_POSITION],sizeof(opcode));
-    memcpy(&block_number,&response_buffer[BLOCK_NUMBER_POSITION],sizeof(block_number));
-    memcpy(&received_file,&response_buffer[DATA_POSITION],sizeof(received_file));
-    printf("Opcode : %d\n",ntohs(opcode));
-    printf("Block number : %d\n",ntohs(block_number));
+    
     
     // acknowledge request building
-    char * ack_buffer = malloc(MAX_BUFFER_SIZE);
-    memset(ack_buffer,0,sizeof(ACK_SIZE));
-    uint16_t ack_opcode = ntohs(ACK_CODE);
-    uint16_t ack_block_number = ntohs(block_number);
-    memcpy(ack_buffer,&ack_opcode,sizeof(ack_opcode));  
-    memcpy(&ack_buffer[BLOCK_NUMBER_POSITION_IN_ACK],&ack_block_number,sizeof(ack_block_number));
-    print_request(ack_buffer,ACK_SIZE);
-    //Send the acknowledgment to the server
-    ssize_t ack_send_status = sendto(client_socket,ack_buffer,ACK_SIZE,0,server_address,sizeof(struct sockaddr));
-    if((int) ack_send_status == SEND_FAILURE){
-        perror("Error in sending the acknowledgment");
-        return EXIT_FAILURE;
-    }
-    else{
-        printf("Acknowledgment sent\n");
-    }
-
+    
 
     free(request_buffer);
     close(client_socket);
